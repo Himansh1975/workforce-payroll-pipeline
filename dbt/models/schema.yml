@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: stg_employee_changes
+    description: Change feed from the Spark delta sync. One row per employee per day it changed.
+    columns:
+      - name: employee_id
+        data_tests: [not_null]
+      - name: change_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["INSERT", "UPDATE"]
+
+  - name: stg_shifts
+    description: One row per clock-in, paired with its clock-out where one exists.
+    columns:
+      - name: shift_id
+        data_tests: [unique, not_null]
+
+  - name: dim_employee
+    description: SCD type 2 employee dimension. One row per version of an employee.
+    columns:
+      - name: employee_sk
+        description: Surrogate key for one version (employee_id + valid_from).
+        data_tests: [unique, not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["ACTIVE", "LEAVE", "TERMINATED"]
+
+  - name: fct_shifts
+    description: Completed shifts priced at the hourly rate in force on the work date.
+    columns:
+      - name: shift_id
+        data_tests: [unique, not_null]
+      - name: employee_sk
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_employee')
+                field: employee_sk
+
+  - name: mart_payroll_weekly
+    description: Weekly payroll totals per employee.
+    columns:
+      - name: gross_pay
+        data_tests: [not_null]
+
+  - name: rpt_shift_exceptions
+    description: Shifts excluded from payroll, with the reason.
+    columns:
+      - name: exception_reason
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["unknown_employee", "missing_clock_out"]

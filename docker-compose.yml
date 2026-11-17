@@ -1,0 +1,23 @@
+services:
+  # Airflow UI + scheduler in one container: http://localhost:8080
+  airflow:
+    build: .
+    image: workforce-pipeline:latest
+    command: standalone
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/project/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    volumes:
+      - .:/opt/project
+
+  # One-off commands without Airflow:
+  #   docker compose run --rm cli "python -m pipeline.run --start 2026-11-10 --end 2026-11-12"
+  cli:
+    build: .
+    image: workforce-pipeline:latest
+    profiles: ["cli"]
+    entrypoint: ["/bin/bash", "-c"]
+    volumes:
+      - .:/opt/project

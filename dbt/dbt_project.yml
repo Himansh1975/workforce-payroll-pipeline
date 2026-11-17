@@ -1,0 +1,15 @@
+name: workforce
+version: "1.0.0"
+profile: workforce
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  workforce:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

@@ -1,0 +1,15 @@
+data/
+warehouse/*.duckdb*
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+__pycache__/
+.pytest_cache/
+*.pyc
+spark-warehouse/
+logs/
+
+# personal interview prep, kept local
+INTERVIEW_NOTES.md
+standalone_admin_password.txt
