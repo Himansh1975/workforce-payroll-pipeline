@@ -7,6 +7,8 @@
 -- Built from the change feed with a window function rather than a dbt snapshot,
 -- so the history depends only on the data, not on when dbt happened to run.
 -- That keeps reruns and backfills deterministic.
+{{ bq_layout(cluster_by=['employee_id']) }}
+
 with versioned as (
 
     select
@@ -17,7 +19,7 @@ with versioned as (
 )
 
 select
-    md5(employee_id || '|' || cast(load_date as varchar))  as employee_sk,
+    {{ dbt.hash("employee_id || '|' || cast(load_date as " ~ dbt.type_string() ~ ")") }} as employee_sk,
     employee_id,
     first_name,
     last_name,

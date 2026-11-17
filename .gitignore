@@ -13,3 +13,7 @@ logs/
 # personal interview prep, kept local
 INTERVIEW_NOTES.md
 standalone_admin_password.txt
+
+# Google Cloud credentials and local settings: never commit
+secrets/
+.env

@@ -1,19 +1,23 @@
 """Daily workforce pipeline.
 
-    generate_source_files -> silver_employees -> silver_punches -> dbt_build
+    generate_source_files -> silver_employees -> silver_punches -> [load_bigquery] -> dbt_build
 
+- DBT_TARGET=dev (default): dbt builds the DuckDB warehouse from parquet.
+- DBT_TARGET=bigquery: silver is loaded into BigQuery first, then dbt builds there.
 - catchup=True: Airflow backfills every day since start_date, one run per day.
 - max_active_runs=1 + depends_on_past=True: days run strictly in order, because
   the delta sync compares each day against the days before it.
 - Every task takes the run's logical date ({{ ds }}), so a rerun of an old day
   reprocesses that day's data, not today's.
 """
+import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 
 PROJECT = "/opt/project"
+TARGET = os.environ.get("DBT_TARGET", "dev")
 
 with DAG(
     dag_id="workforce_daily",
@@ -22,7 +26,7 @@ with DAG(
     catchup=True,
     max_active_runs=1,
     default_args={"depends_on_past": True, "retries": 1, "retry_delay": timedelta(minutes=2)},
-    tags=["workforce", "pyspark", "dbt"],
+    tags=["workforce", "pyspark", "dbt", TARGET],
 ) as dag:
 
     generate = BashOperator(
@@ -39,7 +43,15 @@ with DAG(
     )
     dbt_build = BashOperator(
         task_id="dbt_build",
-        bash_command=f"cd {PROJECT}/dbt && /opt/dbt-venv/bin/dbt build --profiles-dir .",
+        bash_command=f"cd {PROJECT}/dbt && /opt/dbt-venv/bin/dbt build --profiles-dir . --target {TARGET}",
     )
 
-    generate >> employees >> punches >> dbt_build
+    generate >> employees >> punches
+    if TARGET == "bigquery":
+        load = BashOperator(
+            task_id="load_bigquery",
+            bash_command=f"cd {PROJECT} && python -m pipeline.load_bigquery --date {{{{ ds }}}}",
+        )
+        punches >> load >> dbt_build
+    else:
+        punches >> dbt_build

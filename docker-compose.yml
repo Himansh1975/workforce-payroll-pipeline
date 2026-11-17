@@ -9,6 +9,9 @@ services:
     environment:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/project/dags
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      DBT_TARGET: ${DBT_TARGET:-dev}
+      GCP_PROJECT: ${GCP_PROJECT:-}
+      BQ_LOCATION: ${BQ_LOCATION:-US}
     volumes:
       - .:/opt/project
 
@@ -19,5 +22,9 @@ services:
     image: workforce-pipeline:latest
     profiles: ["cli"]
     entrypoint: ["/bin/bash", "-c"]
+    environment:
+      DBT_TARGET: ${DBT_TARGET:-dev}
+      GCP_PROJECT: ${GCP_PROJECT:-}
+      BQ_LOCATION: ${BQ_LOCATION:-US}
     volumes:
       - .:/opt/project

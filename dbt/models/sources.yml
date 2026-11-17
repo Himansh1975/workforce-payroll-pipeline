@@ -1,0 +1,13 @@
+version: 2
+
+# Raw tables in BigQuery, loaded from silver parquet by pipeline/load_bigquery.py.
+# On DuckDB the staging models read the parquet files directly instead.
+sources:
+  - name: raw
+    database: "{{ env_var('GCP_PROJECT', 'unused') }}"
+    schema: workforce_raw
+    tables:
+      - name: employee_changes
+        description: Delta-sync change feed, partitioned by load_date.
+      - name: shifts
+        description: Paired shifts, partitioned by work_date.

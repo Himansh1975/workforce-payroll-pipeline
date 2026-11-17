@@ -6,6 +6,12 @@ select
     cast(work_date as date) as work_date,
     shift_start,
     shift_end,
-    hours_worked,
+    -- Exact decimal, not float: hours feed pay calculations, and float maths
+    -- rounds differently across engines (DuckDB vs BigQuery differed by 23 paise).
+    cast(hours_worked as {{ money_type() }}) as hours_worked,
     is_complete
+{% if target.type == 'bigquery' %}
+from {{ source('raw', 'shifts') }}
+{% else %}
 from read_parquet('{{ silver_path() }}/shifts/*/*.parquet', hive_partitioning = true)
+{% endif %}

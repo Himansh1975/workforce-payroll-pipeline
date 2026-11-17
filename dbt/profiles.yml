@@ -1,7 +1,20 @@
 workforce:
-  target: dev
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
   outputs:
+    # Local warehouse: a single DuckDB file. Used by CI and for quick runs.
     dev:
       type: duckdb
       path: "{{ env_var('WAREHOUSE_PATH', '../warehouse/workforce.duckdb') }}"
       threads: 2
+
+    # Google BigQuery (works in the free sandbox). Needs GCP_PROJECT and a key file.
+    bigquery:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('GCP_KEYFILE', '/opt/project/secrets/gcp-key.json') }}"
+      project: "{{ env_var('GCP_PROJECT', 'set-GCP_PROJECT-in-.env') }}"
+      dataset: workforce
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      threads: 4
+      job_execution_timeout_seconds: 300
+      priority: interactive

@@ -7,10 +7,14 @@ select
     department,
     job_title,
     site_id,
-    cast(hourly_rate as decimal(10, 2)) as hourly_rate,
+    cast(hourly_rate as {{ money_type() }}) as hourly_rate,
     status,
-    cast(hire_date as date)             as hire_date,
+    cast(hire_date as date)                 as hire_date,
     change_type,
     row_hash,
-    cast(load_date as date)             as load_date
+    cast(load_date as date)                 as load_date
+{% if target.type == 'bigquery' %}
+from {{ source('raw', 'employee_changes') }}
+{% else %}
 from read_parquet('{{ silver_path() }}/employee_changes/*/*.parquet', hive_partitioning = true)
+{% endif %}

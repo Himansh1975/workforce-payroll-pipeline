@@ -7,11 +7,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 # dbt gets its own virtualenv so its dependencies cannot clash with Airflow's.
 RUN python -m venv /opt/dbt-venv \
-    && /opt/dbt-venv/bin/pip install --no-cache-dir "dbt-duckdb~=1.9.0" \
+    && /opt/dbt-venv/bin/pip install --no-cache-dir "dbt-duckdb>=1.9,<2" "dbt-bigquery>=1.9,<2" \
     && chown -R airflow /opt/dbt-venv
 
 USER airflow
-RUN pip install --no-cache-dir pyspark==3.5.3 pytest
+RUN pip install --no-cache-dir pyspark==3.5.3 pytest google-cloud-bigquery
 
 ENV PROJECT_ROOT=/opt/project \
     PYTHONPATH=/opt/project/src

@@ -5,6 +5,9 @@
 -- last week's shift cost.
 --
 -- Overtime: hours beyond 8 in a shift are paid at 1.5x.
+-- On BigQuery: partitioned by work_date, clustered by employee_id.
+{{ bq_layout(partition_field='work_date', cluster_by=['employee_id']) }}
+
 select
     s.shift_id,
     d.employee_sk,
@@ -20,7 +23,7 @@ select
     d.hourly_rate,
     round(
         least(s.hours_worked, 8) * d.hourly_rate
-        + greatest(s.hours_worked - 8, 0) * d.hourly_rate * 1.5,
+        + greatest(s.hours_worked - 8, 0) * d.hourly_rate * cast(1.5 as {{ money_type() }}),  -- a bare 1.5 is FLOAT64 in BigQuery
         2
     )                                                             as gross_pay
 from {{ ref('stg_shifts') }} as s
